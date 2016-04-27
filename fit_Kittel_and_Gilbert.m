@@ -1,17 +1,20 @@
 % ========================================
 % Fit Kittel and Gilbert Damping 
 % Extract Heff, alpha, \DeltaH0 with fixed g-factor
-% Extract g-factor separately
+% Additional Extract g-factor separately with 2-parameters linear model
 % ========================================
 clear;
 close all;
 % ========================================
+% Define color table & marker table below for plotting
 colortable = ['r','b','c','k','g','m','r','b','c','k','g','m','r','b','c','k','g','m'];
 markertable = ['o','s','v','^','o','s','v','^','o','s','v','^','o','s','v','^'];
 
-% define constants for unit conversion
+% ========================================
+% constants for unit conversion
+% Check "The NIST Reference on Constants, Units, and Uncertainty" for more details 
+g = 2.135; 
 em=1.758820*1e11;
-g = 2.135;
 A = g^2*em^2/(4*pi*1e9)^2;
 gamma=2*pi*1e9*1e4/(1.758*1e11*0.5*g);%1e9 from GHz, 1e4 from Oe 
 % ========================================
@@ -32,6 +35,7 @@ href = [0,150];% #21
 thickness = t21; % thickness
 h = href;% # \DeltaH intervals
 
+% Load output file 
 fidout=fopen('21_fit_fH.txt','a+');
 fieldmesh = linspace(0,0.8,100);
 
