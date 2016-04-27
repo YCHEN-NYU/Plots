@@ -10,10 +10,19 @@ close all;
 colortable = ['r','b','c','k','g','m','r','b','c','k','g','m','r','b','c','k','g','m'];
 markertable = ['o','s','v','^','o','s','v','^','o','s','v','^','o','s','v','^'];
 
+
+% ========================================
+% set g-factor
+g = 2.135; 
+% set inhomogeneous broadening interval
+hint = [50,400]; % #15 - #20
+href = [0,150];% #21
+
+
+% 
 % ========================================
 % constants for unit conversion
 % Check "The NIST Reference on Constants, Units, and Uncertainty" for more details 
-g = 2.135; 
 em=1.758820*1e11;
 A = g^2*em^2/(4*pi*1e9)^2;
 gamma=2*pi*1e9*1e4/(1.758*1e11*0.5*g);%1e9 from GHz, 1e4 from Oe 
@@ -27,10 +36,7 @@ t19 = [2.67, 2.06, 1.69];
 t20 = [2.67, 2.06, 1.69];
 t21 = [2.67,2.33, 2.19, 2.06, 1.96, 1.86, 1.78, 1.69]';
 
-% inhomogeneous broadening interval
-hint = [50,400]; % #15 - #20
-href = [0,150];% #21
-% 
+
 % cd '/Users/yiyi/Desktop/f-H/#18/18_P2N1';
 thickness = t21; % thickness
 h = href;% # \DeltaH intervals
