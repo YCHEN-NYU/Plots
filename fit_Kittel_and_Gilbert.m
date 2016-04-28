@@ -1,7 +1,7 @@
 % ========================================
 % Fit Kittel and Gilbert Damping 
 % Extract Heff, alpha, \DeltaH0 with fixed g-factor
-% Additional Extract g-factor separately with 2-parameters linear model
+% Additionally extract g-factor separately with 2-parameters linear model
 % ========================================
 clear;
 close all;
@@ -10,40 +10,21 @@ close all;
 colortable = ['r','b','c','k','g','m','r','b','c','k','g','m','r','b','c','k','g','m'];
 markertable = ['o','s','v','^','o','s','v','^','o','s','v','^','o','s','v','^'];
 
-
 % ========================================
-% set g-factor
-g = 2.135; 
-% set inhomogeneous broadening interval
-hint = [50,400]; % #15 - #20
-href = [0,150];% #21
+% Move to destination folder
+cd '/Users/yiyi/Desktop/FMR_dataanalysis/f-H/#21/21_1stPeak_v3';
+g = 2.135; % set a fixed g-factor
+Hint = [0,150]; %set inhomogeneous broadening interval
+fidout=fopen('fit_fH.txt','a+'); % Load output file 
+Hmesh = linspace(0,0.8,100); % set fit 
+thickness = [2.67,2.33, 2.19, 2.06, 1.96, 1.86, 1.78, 1.69]'; % thickness
 
-
-% 
 % ========================================
 % constants for unit conversion
 % Check "The NIST Reference on Constants, Units, and Uncertainty" for more details 
 em=1.758820*1e11;
 A = g^2*em^2/(4*pi*1e9)^2;
-gamma=2*pi*1e9*1e4/(1.758*1e11*0.5*g);%1e9 from GHz, 1e4 from Oe 
-% ========================================
-% thickness matrix(nm) 
-t15 =[2.67, 2.33, 2.06,1.86,1.69];
-t16 = [2.67, 2.06, 1.69];
-t17 = [2.67, 2.06, 1.69];
-t18 =[2.67, 2.33, 2.06 1.86 1.69];
-t19 = [2.67, 2.06, 1.69];
-t20 = [2.67, 2.06, 1.69];
-t21 = [2.67,2.33, 2.19, 2.06, 1.96, 1.86, 1.78, 1.69]';
-
-
-% cd '/Users/yiyi/Desktop/f-H/#18/18_P2N1';
-thickness = t21; % thickness
-h = href;% # \DeltaH intervals
-
-% Load output file 
-fidout=fopen('21_fit_fH.txt','a+');
-fieldmesh = linspace(0,0.8,100);
+gamma=2*pi*1e9*1e4/(1.758*1e11*0.5*g);% 1e9 from GHz, 1e4 from Oe 
 
 % ========================================
 
@@ -55,23 +36,26 @@ files=dir('*N1.txt');
 files = files(index);
 len_files = numel(files);
 p = ones(size(len_files));
-fig2 = figure();
 
+
+fig2 = figure();
 set(fig2, 'Position', [80, 60, 1000, 800])
+
 
 for i = 1:len_files
 data = importdata(files(i).name);
-f = data(:,1);
+f = data(:,1); % in GHz
 Hres = data(:,2);
-Hres = Hres*10^(-4);
+Hres = Hres*10^(-4); % in Tesla
+
 % lineswidth;
 lw = data(:,3);
 lw_low = data(:,4);
 lw_up = data(:,5);
 lw_err = (lw_up-lw_low)/2;
 x = Hres;
+y =f.^2./(A*Hres); % define y as f^2/((Gamma/2pi)*Hres) = Hres + Heff
 
-y =f.^2./(A*Hres);
 % plot f-H
 
 fig1 = figure();
@@ -83,8 +67,6 @@ set(fig1, 'Position', [80, 60, 1200, 500])
 subplot(1,2,1);
 plot(x,y,'color',colortable(i),'marker',markertable(i),'MarkerSize',20)
 
-% xlim ([0,0.8]);
-% ylim ([0.5,1.8]);
 
 xlabel('H_{res} (T)','FontSize',24)
 ylabel('f^2/(A*H_{res}) (T), A = (\gamma\mu_0/(2\pi))^2','FontSize',24);
@@ -92,13 +74,13 @@ set(gca,'fontsize',24);
 hold on
 
 % select data to be fitted.
-[Hleft,fleft]=ginput(1);
-[Hright,fright]=ginput(1);
+[xleft,yleft]=ginput(1);
+[xright,yright]=ginput(1);
  
 ind=zeros(length(x),1);
-j = 0;
+
     for j =1:1:length(x);
-         if x(j)<Hleft || x(j)>Hright
+         if x(j)<xleft || x(j)>xright
             ind(j)=j;
          end               
     end
@@ -110,21 +92,24 @@ plot(x_slt,y_slt,'color',colortable(i),'marker','.','MarkerSize',10)
 f_slt = f(setdiff(1:length(f),ind));
 lw_slt = lw(setdiff(1:length(lw),ind));
 lw_err_slt= lw_err(setdiff(1:length(lw_err),ind));
-% lw_up_slt= lw_up(setdiff(1:length(lw_up),ind));
 
 
-%%
-
+% ========================================
+% Fit data with y = x + c model (fixed )
+% f^2/((Gamma/2pi)*Hres) = Hres + Heff
+% fit selected data
 [xData, yData] = prepareCurveData( x_slt, y_slt );
 
-% Set up fittype and options.
-ft = fittype( 'x+c', 'independent', 'x', 'dependent', 'y' );
-opts = fitoptions( 'Method', 'NonlinearLeastSquares' );
-opts.Display = 'Off';
+% Set up fittype and options and starting point
 
-opts.StartPoint = Hleft - fleft;
+ft = fittype( 'x+c', 'independent', 'x', 'dependent', 'y' ); % model
+opts = fitoptions( 'Method', 'NonlinearLeastSquares' ); % options
+opts.Display = 'Off'; 
 
-[fitresult, gof] = fit( xData, yData, ft, opts );
+opts.StartPoint = yleft - xleft; % starting point
+
+[fitresult, ~] = fit( xData, yData, ft, opts );
+fieldmesh = linspace(0,0.8,1000);
 line(fieldmesh,fieldmesh+fitresult.c,'linewidth',2,'color',colortable(i));
 Heff = fitresult.c; % in Tesla
 
@@ -132,8 +117,8 @@ ciP = confint(fitresult,0.95);
 Heff_err = (ciP(2,1)-ciP(1,1))/2;
 
 
-
 %%
+% fit with f^2/Hres = A*(Hres+Heff)
 testx = x_slt;
 testy = y_slt*A;
 ok_ = isfinite(testx) & isfinite(testy); %% just checking testx and testy are finite (wich are the plot we want to fit)
@@ -239,7 +224,7 @@ plot(x1,y1,'color',colortable(i),'marker',markertable(i),'MarkerSize',10)
 
 
 xlim([0,30]);
-ylim(h);
+ylim(Hint);
 
 
             
