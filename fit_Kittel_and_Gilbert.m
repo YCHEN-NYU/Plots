@@ -1,4 +1,5 @@
 % ========================================
+% Thanks to Yuming Hung with the original version for the fitting
 % Fit Kittel and Gilbert Damping 
 % Extract Heff, alpha, \DeltaH0 with fixed g-factor
 % Additionally extract g-factor separately with 2-parameters linear model
