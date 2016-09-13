@@ -1,8 +1,9 @@
 % ========================================
-% Thanks to Yuming Hung with the original version for the fitting
+% Jun, 2016 
 % Fit Kittel and Gilbert Damping 
-% Extract Heff, alpha, \DeltaH0 with fixed g-factor
+% Extract g factor with one-parameter model, Heff, alpha, \DeltaH0 with fixed g-factor
 % Additionally extract g-factor separately with 2-parameters linear model
+
 % ========================================
 clear;
 close all;
@@ -13,33 +14,40 @@ markertable = ['o','s','v','^','o','s','v','^','o','s','v','^','o','s','v','^'];
 
 % ========================================
 % Move to destination folder
-cd '/Users/yiyi/Desktop/FMR_STT53#/STT5440_5degree';
-angle = 5*3.14159265/180;
+cd '/Users/yiyi/Desktop/June_FMR_STT53#/STT5441-repeat/10degree';
 
-g = 2.135; % set a fixed g-factor
-Hint = [0,100]; %set inhomogeneous broadening interval
-fidout=fopen('fit_fH.txt','a+'); % Load output file 
-Hmesh = linspace(0,0.8,100); % set fit 
-% thickness = [2.67,2.33, 2.19, 2.06, 1.96, 1.86, 1.78, 1.69]'; % thickness
+% set tilted angle
+angle = 10*3.14159265/180;
+
+% set a fixed g-factor (if there's any)
+g = 2.135; 
+
+% Load output file
+fidout=fopen('fit_fH.txt','a+');  
 
 % ========================================
 % constants for unit conversion
-% Check "The NIST Reference on Constants, Units, and Uncertainty" for more details 
-em=1.758820*1e11; %electron charge to mass quotient 
-A = g^2*em^2/(4*pi*1e9)^2;
-gamma=2*pi*1e9*1e4/(1.758820*1e11*0.5*g);% 1e9 from GHz, 1e4 from Oe 
+% Check "The NIST Reference on Constants, Units, and Uncertainty" 
+% for more details 
+
+% electron charge to mass quotient 
+  em=1.758820*1e11; 
+  
+% f^2/(A*Hres) = Hres
+  A = g^2*em^2/(4*pi*1e9)^2;
+  
+% Fitting constant
+  gamma=2*pi*1e9*1e4/(1.758820*1e11*0.5*g);% 1e9 from GHz, 1e4 from Oe 
 
 % ========================================
-
-%% open the following txt file to save data
+% open the following txt file to save data
 
 %%% read files in the current folder
 files=dir('fit_fH.txt');
 
-
-
 [filenames, index] = sort_nat({files.name});% sort out the files in natural order
 files = files(index);
+
 len_files = numel(files);
 p = ones(size(len_files));
 
@@ -47,37 +55,35 @@ p = ones(size(len_files));
 fig2 = figure();
 set(fig2, 'Position', [80, 60, 1000, 800])
 
-
 for i = 1:len_files
 data = importdata(files(i).name);
 f = data(:,1); % in GHz
-Hres = data(:,2);
-Hres = Hres*10^(-4); % in Tesla
-Hres = Hres*cos(angle);
+Hres = data(:,2)*cos(angle);
+Hres = Hres*10^(-4)*cos(angle); % in Tesla
+
 % lineswidth;
-lw = data(:,3);
-lw_low = data(:,4);
-lw_up = data(:,5);
+lw = data(:,3)*cos(angle);
+lw_low = data(:,4)*angle;
+lw_up = data(:,5)*angle;
 lw_err = (lw_up-lw_low)/2;
+
+% define y as f^2/((Gamma/2pi)*Hres) = Hres + Heff
 x = Hres;
-y =f.^2./(A*Hres); % define y as f^2/((Gamma/2pi)*Hres) = Hres + Heff
+y =f.^2./(A*Hres); 
 
-% plot f-H
-
+% plot f/(A*Hres) - Hres
 fig1 = figure();
 figure(fig1);
 axes1 = axes('Parent',fig1,'FontSize',32);
-
 set(fig1, 'Position', [80, 60, 1200, 500])
+
 
 subplot(1,2,1);
 plot(x,y,'color',colortable(i),'marker',markertable(i),'MarkerSize',20)
-
-
+hold on
 xlabel('H_{res} (T)','FontSize',24)
 ylabel('f^2/(A*H_{res}) (T), A = (\gamma\mu_0/(2\pi))^2','FontSize',24);
 set(gca,'fontsize',24);
-hold on
 
 % select data to be fitted.
 [xleft,yleft]=ginput(1);
@@ -93,12 +99,13 @@ ind=zeros(length(x),1);
     
 x_slt=x(setdiff(1:length(x),ind));
 y_slt=y(setdiff(1:length(y),ind));
+
+% highlight selected data points
 plot(x_slt,y_slt,'color',colortable(i),'marker','.','MarkerSize',10)
 
 f_slt = f(setdiff(1:length(f),ind));
 lw_slt = lw(setdiff(1:length(lw),ind));
 lw_err_slt= lw_err(setdiff(1:length(lw_err),ind));
-
 
 % ========================================
 % Fit data with y = x + c model (fixed )
@@ -123,45 +130,48 @@ ciP = confint(fitresult,0.95);
 Heff_err = (ciP(2,1)-ciP(1,1))/2;
 
 
-%%
+%% ============================================================
 % fit with f^2/Hres = A*(Hres+Heff)
 testx = x_slt;
 testy = y_slt*A;
-ok_ = isfinite(testx) & isfinite(testy); %% just checking testx and testy are finite (wich are the plot we want to fit)
-            %exclude data exclude points from testx,testy through the logic ok_ variable. if ok_ is zero we exclude that point
-            x2=testx(ok_);
-            y2=testy(ok_);
-            %%the fitting domain is the whole data range
-            %%%fitting with a A*sqrt((x-ex)*(x-ex+xeff)) ex:exchange bias
-            fo_ = fitoptions('method','NonlinearLeastSquares','Lower',[0 -5.00],'Upper',[2000 5.0],...
-                'DiffMinChange', 1e-16,'TolFun', 1e-14 ,'MaxIter',15000,'MaxFunEvals',15000,...
-                'Exclude',excludedata(testx(ok_), testy(ok_),'domain', [x2(1),x2(length(x2))]));
-            len_x = length(x2);
-            st_A = (y2(len_x)-y2(1))/(x2(len_x)-x2(1));
-            st_eff = y2(len_x)/y2(len_x)-x2(len_x);
-            
-            st_ = [st_A, st_eff];%initial condition
-            
-            set(fo_,'Startpoint',st_);
-            ft_ = fittype('A*(x+xeff)',...
-                'dependent',{'y'},'independent',{'x'},...
-                'coefficients',{'A', 'xeff'});
-%             Fit this model using new data
-            [cfunP,gof,output] = fit(x2,y2,ft_,fo_);
-          
-%             fit parameters
-            paramP2=coeffvalues(cfunP);
-            
-%             confidence of fit parameters (2 \delta region)
-            ciP = predint(cfunP,0.95);
-            
-%             g factor with lower and upper bound for 95% confidence
-            gfactor=sqrt(paramP2(1))*2*2*pi*1e9/(em);
-            gfactor_low = sqrt(ciP(1))*2*2*pi*1e9/(em);
-            gfactor_up = sqrt(ciP(2))*2*2*pi*1e9/(em);
-            gfactor_err = (gfactor_up - gfactor_low)/2;
-%      
+ok_ = isfinite(testx) & isfinite(testy); 
+% just checking testx and testy are finite (wich are the plot we want to fit)
+% exclude data exclude points from testx,testy through the logic ok_ variable.
+% if ok_ is zero we exclude that point
+x2=testx(ok_);
+y2=testy(ok_);
 
+%%the fitting domain is the whole data range
+%%%fitting with a A*sqrt((x-ex)*(x-ex+xeff)) ex:exchange bias
+
+fo_ = fitoptions('method','NonlinearLeastSquares','Lower',[0 -5.00],'Upper',[2000 5.0],...
+'DiffMinChange', 1e-16,'TolFun', 1e-14 ,'MaxIter',15000,'MaxFunEvals',15000,...
+'Exclude',excludedata(testx(ok_), testy(ok_),'domain', [x2(1),x2(length(x2))]));
+
+len_x = length(x2);
+st_A = (y2(len_x)-y2(1))/(x2(len_x)-x2(1));
+st_eff = y2(len_x)/y2(len_x)-x2(len_x); 
+%initial condition
+st_ = [st_A, st_eff];      
+set(fo_,'Startpoint',st_);
+ft_ = fittype('A*(x+xeff)',...
+'dependent',{'y'},'independent',{'x'},...
+'coefficients',{'A', 'xeff'});
+
+%Fit this model using new data
+[cfunP,gof,output] = fit(x2,y2,ft_,fo_);
+          
+%fit parameters
+paramP2=coeffvalues(cfunP);
+            
+%confidence of fit parameters (2 \delta region)
+ciP = predint(cfunP,0.95);
+            
+%g factor with lower and upper bound for 95% confidence
+gfactor=sqrt(paramP2(1))*2*2*pi*1e9/(em);
+gfactor_low = sqrt(ciP(1))*2*2*pi*1e9/(em);
+gfactor_up = sqrt(ciP(2))*2*2*pi*1e9/(em);
+gfactor_err = (gfactor_up - gfactor_low)/2;
 
 %%
 subplot(1,2,2);
@@ -194,10 +204,6 @@ lw_chosen=lw(setdiff(1:length(lw),ind));
 
 
 % =============================
-
-
-
-
 
 % fit with selected region from Kittel fitting
 
