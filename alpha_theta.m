@@ -12,8 +12,8 @@ close all;
 
 %% ========================================================================
 % Give destination folder, outputfile
-cd '/Users/yiyi/Desktop/0909';
-angle = -12:3:12;
+cd '/Users/yiyi/Desktop/FMR_2TMagnet';
+angle = [-12, -6, -3, 0, 3, 6, 12];
 outputname='Gilbert_angle.txt';
 % Give indices of field(T), S12_real, S12_imag
 indexH = 2;
@@ -32,7 +32,7 @@ h = 6.62607*10^(-34); % J*s
 
 samplename = '#STT5445';
 % thickness = [1.85, 2.3, 4.0, 5.3];
-thickness = 2.67;
+thickness = 5.3;
 
 xlim_int = [0,0.8]; % Hres(T)
 ylim_int = [0,10]; % f(GHz)
@@ -393,7 +393,9 @@ end
 % Gilbert_equation ='$\Delta H = \Delta H_0 +  (\frac{2 \pi}{\gamma_e})f \alpha$'; 
 % 
 
-% legend(plot1,'+5','+10','-5','-10', 'location','northwest');
+legend(plot1,'-12','-6','-3','0','3','6','12', 'location','northwest');
+legend(plot2,'-12','-6','-3','0','3','6','12', 'location','northwest');
+
 % legend(plot2,'+5','+10','-5','-10', 'location','northwest');
 
 % legend(plot1,'2.3 nm','4.0 nm','5.3 nm','location','northwest');
