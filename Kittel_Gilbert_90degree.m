@@ -1,3 +1,6 @@
+% Fit Kittel & Gilber Damping for Perpendicular FMR 
+% Yiyi, 09/22/2016
+
 clear;
 close all;
 
@@ -11,11 +14,10 @@ mu_B = 927.400*10^(-26); % J/T
 h = 6.62607*10^(-34); % J*s
 factor = 10^(9)*h/mu_B;
 
-
 %***************************
 %***************************
 % enter sample name
-sampleName = 'STT54'; 
+sampleName = 'W6PN21'; 
 
 gMat = []; % define an empty variable to store g-factor
 
@@ -32,7 +34,6 @@ fUpperbound = 20;
 dHLowerbound = 0;
 dHUpperbound = 300;
 
-% 
 Hlim = [HLowerbound,HUpperbound]; % Hres(T)
 flim = [fLowerbound,fUpperbound]; % f(GHz)
 dHlim = [dHLowerbound, dHUpperbound];
@@ -101,10 +102,10 @@ i_end = numel(filenames);
 
 plot1 = zeros(1, i_end);
 plot2 = plot1;
-lengendLine = plot1;
+legendLine = [];
 
 
-for i = i_start:4
+for i = i_start:i_end
  
 rawdata = importdata(filenames{i});
 
@@ -119,6 +120,8 @@ lw_err = (lw_up-lw_low)/2;
 
 x = Hres;
 y = f;
+
+
 
 
 figure(fig1);
@@ -143,11 +146,9 @@ xlabel(xlabelname,'FontSize',36,'FontWeight',...
     'fontsize',42,'FontWeight','bold');
 
 set(gca,'Fontsize',36,'Linewidth',3,'fontweight','bold');
-grid on;
 % select fitting area
 % [xleft,yleft]=ginput(1);
 % [xright,yright]=ginput(1);
-
  
 ind=zeros(length(x),1);
 
@@ -174,17 +175,13 @@ plot(x_slt,y_slt,'color',colortable(i),'marker',...
 testx = x_slt;
 testy = y_slt;
 y_slt = y_slt*factor;
-ok_ = isfinite(testx) & isfinite(testy); %% just 
-% checking testx and testy are finite (wich are 
-% the plot we want to fit)
-%exclude data exclude points from testx,testy 
-% through the logic ok_ variable. if ok_ is zero
-% we exclude that point
+ok_ = isfinite(testx) & isfinite(testy); 
+
 x2=testx(ok_);
 y2=testy(ok_);
-%%the fitting domain is the whole data range
-%%%fitting with a A*sqrt((x-ex)*(x-ex+xeff)) ex:exchange bias
-fo_ = fitoptions('method','NonlinearLeastSquares',...
+ 
+fo_ = fitoptions('method','NonlinearLeastSquares'...
+    ,...
     'Lower',[0 -100],'Upper',[100 100],...
 'DiffMinChange', 1e-16,'TolFun', 1e-14 ,'MaxIter',...
 15000,'MaxFunEvals',15000,...
@@ -240,12 +237,11 @@ ciP = confint(cfunP,0.95);
 % colortable(i));
 % ====================================================
 
-                        
+figure(fig1);
 plot(Hmesh, paramP(1)*(Hmesh+paramP(2)),...
     'color',colortable(i),'LineWidth',4);
 xlim(Hlim);
 ylim(flim);
-
 
 g=paramP(1)*factor;
 g_up = ciP(2,1)*factor;
@@ -279,13 +275,14 @@ text_g = [p5,p6,p7,p8];
 % [0.15 0.55 0.5 0.3],...
 % 'string',{Kittel_equation,text_Heff,text_g},
 % 'FitBoxToText','on',...
-% 'LineStyle','none','FontSize',32,  'interpreter','latex',...
+% 'LineStyle','none','FontSize',32,  'interpreter',
+% 'latex',...
 % 'fontsize',32,'FontWeight','bold');
 %      
 clear testx testy;
  
 % % =============================================
-
+figure(fig2);
 testx = f_slt;
 testy = lw_slt;
 
@@ -296,16 +293,10 @@ ok2=excludedata(testx,testy,'box',[0 10 10e-3 1]);
 ok3=excludedata(testx,testy,'box',[0 testx(length(testx)) ...
     40e-3 1]);
 
-ok_ = isfinite(testx) & isfinite(testy); %&ok1&ok2&ok3; 
-% just checking testx and testy are finite 
-% (wich are the plot we want to fit)
-%exclude data exclude points from testx,testy 
-% through the logic ok_ variable. if ok_ is zero 
-%  we exclude that point
+ok_ = isfinite(testx) & isfinite(testy);  
 x1=testx(ok_); %x is Frequencies in GHz
 y1=testy(ok_); %y is width in Oe
             
-% plot(testx(ok_),testy(ok_),'color',colortable(i),
 % 'marker',markertable(i),'MarkerSize',10)
 % if(i > 3)
 %     k = i -4;
@@ -330,7 +321,6 @@ xlabel(xlabelname2,'FontSize',42,'FontWeight',...
 'fontsize',36,'FontWeight','bold') 
 
 set(gca,'Fontsize',36,'Linewidth',3,'fontweight','bold');
-grid on;
 xlim(flim);
 ylim(dHlim);
 
@@ -382,7 +372,9 @@ alpha_up = sqrt(ciPlw(2,2))/gamma;
 
 alpha = paramPlw(2)/gamma;
 alpha_err = (alpha_up - alpha_low)/2;
-           
+     
+
+figure(fig2);
 % Plot this fit and write the parameters
 plot(fmesh, cfunPlw(fmesh), ...
     'color',colortable(i),'LineWidth',4);
@@ -408,28 +400,33 @@ fprintf(fidout,...
     thickness(i),Heff,Heff_err, g,g_err, dH0,...
     dH0_err, alpha, alpha_err);
 
+legendThickness = sprintf('%1.1f',thickness(i)); 
+legendSpacer = '\hspace{3.5 mm}';
+legendGfactor = sprintf('%1.2f',gMat(i));
+legendHeff = sprintf('%1.2f',Heff);
 
-% legendLine = [num2str(thickness(i)) num2str(gMat(i))];
 
-legendThickness = sprintf('%1.3f',thickness(i)); 
-% Effectrive field
-legendSpacer = 'nm, g = ';
-legendGfactor = sprintf('%1.3f',gMat(i));
-lengendLine  = [legendLine mat2str([legendThickness ...
-    legendSpacer legendGfactor])];
+legendLine  = [legendLine; legendThickness ...
+    legendSpacer legendGfactor legendSpacer legendHeff];
 end
 
 % 
 % % **************************************************
-legendHeader = 'g-factor: ';
+legendHeader ='$t(nm)\hspace{2mm} g \hspace{2mm}   H_{eff}(T)$';
 KittelEquation = ...
-    '$$\frac{\omega}{\gamma_e}_\perp =H_{res}+H_{eff}$$'; 
+    '$$\frac {\omega}{\gamma_e}_\perp =H_{res}+H_{eff}$$'; 
+
+
+figure(fig1);
+legend(plot1, '1.85 nm', '2.3 nm','4.0 nm', ...
+    '5.3 nm', 'location', 'northwest');
 
 annotation(fig1,'textbox',...
-[0.15 0.3 0.5 0.3],...
-'string',{KittelEquation},'FitBoxToText','on',...
-'LineStyle','none','FontSize',32,  'interpreter','latex',...
-'fontsize',32,'FontWeight','bold');
+[0.15 0.35 0.5 0.3],...
+'string',{KittelEquation, '\newline', legendHeader, legendLine}...
+,'FitBoxToText','on',...
+'LineStyle','none','FontSize',24,  'interpreter','latex',...
+'fontsize',24,'FontWeight','bold');
 % % **************************************************
 % % 1.85, 2.3, 4.0, 5.3
 % % **************************************************
@@ -439,17 +436,14 @@ GilbertEquation = ...
 annotation(fig2,'textbox',...
 [0.45 0.55 0.5 0.3],...
 'string',{GilbertEquation}, 'FitBoxToText','on',...
-'LineStyle','none','FontSize',32, 'interpreter','latex',...
-'fontsize',32,'FontWeight','bold');
+'LineStyle','none','FontSize',24, 'interpreter','latex',...
+'fontsize',24,'FontWeight','bold');
 % **************************************************
-figure(fig1);
-legend(plot1, '1.85 nm', '2.3 nm','4.0 nm', ...
-    '5.3 nm', 'location', 'northwest');
+
 
 figure(fig2);
 legend(plot2, '1.85 nm', '2.3 nm', '4.0 nm', ...
     '5.3 nm', 'location', 'northwest');
-
 
 fignameKittel = [sampleName '_Kittel.png'];
 fig1.PaperPositionMode = 'auto';% set image size as auto
