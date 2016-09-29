@@ -1,0 +1,69 @@
+markertable = ['o','s','v','^','o','s','v','^',...
+    'o','s','v','^','o','s','v','^'];
+colortable = lines(8);
+sizeMK = 15;
+titlename = '$H - V$';
+xlabelname = '$V (Volt) $';
+ylabelname = '$H (T)$';
+
+fileFormat = '*.dat';
+files=dir(fileFormat);
+[filenames, index] = sort_nat({files.name});
+
+fig = figure();
+set(fig, 'Position', [200, 100, 1000, 800]);
+set(fig,'color','w');
+fig.PaperPositionMode = 'auto';% set image size as auto
+Vside = zeros(1401,1);
+Hside = Vside;
+Vcenter = Vside;
+Hcenter = Vside;
+for i = 1:numel(filenames)
+    rawdata = importdata(filenames{i});
+    
+    V = max(rawdata(:,1))-rawdata(:,1)+50;
+    V = V/1000;
+    H = rawdata(:,2);
+    
+    if i < 3
+        Vcenter = Vcenter + V;
+        Hcenter = Hcenter + H;
+    else
+        Vside = Vside + V;
+        Hside = Hside + H;
+    end
+    
+        
+    hold on;    
+    
+% grid on;
+end
+
+Vavg = (Vside + Vcenter)/4;
+dH = (Hside - Hcenter)/4;
+dH = dH*1000; % T
+
+
+    line(Vavg, dH*1000,'color', colortable(i,:),'linewidth', 2);
+    
+    title(titlename,'FontSize',42,'FontWeight',...
+    'bold','interpreter','latex',...
+    'fontsize',42,'FontWeight','bold');
+%     xlim([0,1.2]);
+
+    ylabel(ylabelname,'FontSize',36,'FontWeight',...
+    'bold', 'interpreter','latex',...
+    'fontsize',42,'FontWeight','bold');
+    xlabel(xlabelname,'FontSize',36,'FontWeight',...
+    'bold','interpreter','latex',...
+    'fontsize',42,'FontWeight','bold');
+
+set(gca,'Fontsize',36,'Linewidth',3,'fontweight','bold');
+box on;
+
+% lgd = legend('CenterLeft', 'CenterRight', 'SideLeft', 'SideRight', 'location', 'northwest');
+
+% lgd = legend('$\Delta H = H_{side} - H_{mid}$', 'location','northwest');
+%  set(lgd, 'FontSize',36,'FontWeight',...
+%     'bold','interpreter','latex',...
+%     'fontsize',42,'FontWeight','bold');

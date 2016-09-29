@@ -5,10 +5,13 @@ clear;
 close all;
 
 % Define color table & marker table below for plotting
-colortable = ['r','b','c','k','g','m','r','b',...
-    'c','k','g','m','r','b','c','k','g','m'];
+% colortable = ['r','b','c','k','g','m','r','b',...
+%     'c','k','g','m','r','b','c','k','g','m'];
 markertable = ['o','s','v','^','o','s','v','^',...
     'o','s','v','^','o','s','v','^'];
+
+colortable = lines(8);
+sizeMK = 15;
 
 mu_B = 927.400*10^(-26); % J/T
 h = 6.62607*10^(-34); % J*s
@@ -16,52 +19,59 @@ factor = 10^(9)*h/mu_B;
 
 %***************************
 %***************************
-% enter sample name
-cd '/Users/yiyi/Desktop/STT54_90degree/STT5442-45_90degree';
-sampleName = 'STT54'; 
+% cd '/Users/yiyi/Desktop/FINAL_v2/W6PN21_P2N1_0degree';
 
+% enter sample name
+sampleName = 'W6PN'; 
+if strcmp(sampleName, 'STT54')
+    N = 4;
+else 
+    N = 3;
+end
+
+angleDegree = 6;
+angleRad = angleDegree*3.14159265/180;
 gMat = []; % define an empty variable to store g-factor
 
-yleft = 9.5;
-yright = 19.5;
+yleft = 7.5;
+yright = 26.5;
 
 
 HLowerbound = 0;
-HUpperbound = 2;
+HUpperbound = 1;
 
 fLowerbound = 0;
-fUpperbound = 20;
+fUpperbound = 30;
 
 dHLowerbound = 0;
-dHUpperbound = 300;
+dHUpperbound = 200;
 
 Hlim = [HLowerbound,HUpperbound]; % Hres(T)
 flim = [fLowerbound,fUpperbound]; % f(GHz)
 dHlim = [dHLowerbound, dHUpperbound];
 f2lim = [0, 10];
+
 meshPoints = 100;
 Hmesh = linspace(HLowerbound,fUpperbound,meshPoints);
 fmesh = linspace(fLowerbound,fUpperbound,meshPoints);
 
-% thickness = [2.67, 2.06, 1.69];
+% thickness = [2.67, 2.06, 1.69,2.67, 2.06, 1.69];
+thickness = [1.85, 2.3, 4.0, 5.3,1.85, 2.3, 4.0, 5.3 ];
+% thickness = [1.85, 1.85, 2.3, 2.3, 4.0, 4.0, 5.3, 5.3];
 
-thickness = [1.85, 2.3, 4.0, 5.3];
-
-titlename = ['$Kittel(' sampleName  '): f - H_{res}$'];
+titlename = ['$Kittel(' sampleName  '): \frac{1}{H_{res}}(\frac{\omega}{\frac{\mu_B}{h}})^2 - H_{res}$'];
 xlabelname = '$H_{res} (T)$';
-ylabelname = '$f(GHz)$';
+ylabelname = '$\frac{1}{H_{res}}(\frac{\omega}{\frac{\mu_B}{h}})^2$';
 
 titlename2 = ['$Gilbert(' sampleName '): \Delta H - f$'];
 xlabelname2 = '$f (GHz)$';
 ylabelname2 = '$\Delta H (Oe)$';
 
-angleDegree = 0;
-angleRad = angleDegree*3.14159265/180;
 
-fileFormat = [sampleName '*.txt'];
+fileFormat = ['*' sampleName '*.txt'];
 files=dir(fileFormat);
 [filenames, index] = sort_nat({files.name});
-outputname = ['output_' sampleName '.txt'];
+outputname = ['output' '.txt'];
 folder = pwd;
 outputloc=[folder '/' outputname];
 fidout=fopen(outputloc,'a+');
@@ -108,7 +118,6 @@ plot2 = plot1;
 legendLine = [];
 legendLine_Gilbert =[];
 
-
 for i = i_start:i_end
  
 rawdata = importdata(filenames{i});
@@ -123,24 +132,24 @@ lw_up = rawdata(:,5)*cos(angleRad);
 lw_err = (lw_up-lw_low)/2;
 
 x = Hres;
-y = f;
-
-
+y = (f*10^(9)).^2./((mu_B/h)^2*Hres);
 
 
 figure(fig1);
-% if(i > 3)
-%     j = i -4;
-% end
-plot1(i) = plot(x,y,'color',colortable(i), ...
-    'marker',markertable(i),'markersize',20);
+if(i <= N)
+plot1(i) = plot(x,y, 'linestyle', 'none','color',colortable(i,:), 'marker',markertable(i),'markersize',sizeMK);
+else
+    plot1(i) = plot(x,y, 'linestyle', 'none','color', colortable(i-N,:), 'marker', markertable(i-N),'markersize',sizeMK,'MarkerFaceColor',colortable(i-N,:));
+end
 hold on;
+
 
 title(titlename,'FontSize',42,'FontWeight',...
     'bold','interpreter','latex',...
     'fontsize',42,'FontWeight','bold');
 xlim(Hlim);
 ylim(f2lim);
+
 
 ylabel(ylabelname,'FontSize',36,'FontWeight',...
     'bold', 'interpreter','latex',...
@@ -154,38 +163,41 @@ set(gca,'Fontsize',36,'Linewidth',3,'fontweight','bold');
 % [xleft,yleft]=ginput(1);
 % [xright,yright]=ginput(1);
  
-ind=zeros(length(x),1);
+fleft = 10;
+fright = 28;
 
-    for j =1:1:length(y);
-         if y(j)<yleft || x(j)>yright
+ind=zeros(length(f),1);
+
+    for j =1:1:length(f);
+         if f(j)< fleft || f(j)> fright
             ind(j)=j;
          end               
     end
     
-x_slt = x(setdiff(1:length(x),ind));
-y_slt = y(setdiff(1:length(x),ind));
-f_slt = f(setdiff(1:length(x),ind));
+x_slt = x(setdiff(1:length(f),ind));
+y_slt = y(setdiff(1:length(f),ind));
+f_slt = f(setdiff(1:length(f),ind));
 
-lw_slt = lw(setdiff(1:length(x),ind));
-lw_low_slt = lw_low(setdiff(1:length(x),ind));
-lw_up_slt = lw_up(setdiff(1:length(x),ind));
+lw_slt = lw(setdiff(1:length(f),ind));
+lw_low_slt = lw_low(setdiff(1:length(f),ind));
+lw_up_slt = lw_up(setdiff(1:length(f),ind));
 
 % Plot out selected data
-plot(x_slt,y_slt,'color',colortable(i),'marker',...
-    markertable(i),'MarkerSize',10);
-
+if i <= N
+plot(x_slt,y_slt, 'linestyle', 'none','color', colortable(i,:), 'marker', markertable(i),'MarkerSize',sizeMK);
+else
+    plot(x_slt,y_slt, 'linestyle', 'none','color', colortable(i-N,:), 'marker', markertable(i-N),'MarkerSize',sizeMK);
+end
 % =========================================================
 % Model with 2-parameters
 testx = x_slt;
 testy = y_slt;
-y_slt = y_slt*factor;
 ok_ = isfinite(testx) & isfinite(testy); 
 
 x2=testx(ok_);
 y2=testy(ok_);
  
-fo_ = fitoptions('method','NonlinearLeastSquares'...
-    ,...
+fo_ = fitoptions('method','NonlinearLeastSquares',...
     'Lower',[0 -100],'Upper',[100 100],...
 'DiffMinChange', 1e-16,'TolFun', 1e-14 ,'MaxIter',...
 15000,'MaxFunEvals',15000,...
@@ -242,19 +254,19 @@ ciP = confint(cfunP,0.95);
 % ====================================================
 
 figure(fig1);
-plot(Hmesh, paramP(1)*(Hmesh+paramP(2)),...
-    'color',colortable(i),'LineWidth',4);
-xlim(Hlim);
-ylim(flim);
+if i <= N
+plot(fmesh, cfunP(fmesh), 'color',colortable(i,:),'LineWidth',2);
+else
+    plot(fmesh, cfunP(fmesh), 'color',colortable(i-N,:),'LineWidth',2);
+end
+xlim(xlim);
+ylim(ylim);
 
-g=paramP(1)*factor;
-g_up = ciP(2,1)*factor;
-g_low = ciP(1,1)*factor;
+g=sqrt(paramP(1));
+g_up = sqrt(ciP(2,1));
+g_low = sqrt(ciP(1,1));
 g_err = (g_up - g_low)/2;% half of error bar length
-           
-gMat = [gMat g];
-
-
+            
 Heff = paramP(2);
 Heff_up = ciP(2,2);
 Heff_low = ciP(1,2);
@@ -302,15 +314,13 @@ x1=testx(ok_); %x is Frequencies in GHz
 y1=testy(ok_); %y is width in Oe
             
 % 'marker',markertable(i),'MarkerSize',10)
-% if(i > 3)
-%     k = i -4;
-% end
-plot2(i) = errorbar(f,lw,lw_err,'color',...
-    colortable(i),'marker',markertable(i),'MarkerSize',20);
-
+if(i <= N)
+plot2(i) = errorbar(f,lw,lw_err, 'linestyle', 'none','color', colortable(i,:), 'marker', markertable(i),'MarkerSize',sizeMK);
+else 
+    plot2(i) = errorbar(f,lw,lw_err, 'linestyle', 'none','color', colortable(i-N,:),'marker', markertable(i-N),'MarkerSize',sizeMK,'MarkerFaceColor',colortable(i-N,:));
+end
 hold on;
-plot(f_slt,lw_slt,'color',colortable(i),...
-    'marker',markertable(i),'MarkerSize',10)
+% plot(f_slt,lw_slt,[colortable(i) markertable(i)],'MarkerSize',5)
 
 
 title(titlename2,'FontSize',42,'FontWeight',...
@@ -380,9 +390,13 @@ alpha_err = (alpha_up - alpha_low)/2;
 
 figure(fig2);
 % Plot this fit and write the parameters
+if i <= N
 plot(fmesh, cfunPlw(fmesh), ...
-    'color',colortable(i),'LineWidth',4);
-
+    'color',colortable(i,:),'LineWidth',2);
+else
+    plot(fmesh, cfunPlw(fmesh), ...
+    'color',colortable(i-N,:),'LineWidth',2);
+end
 % GilbertEquation ='$$\Delta H = \Delta H_0 + 
 % (\frac{2 \pi}{\gamma_e})f \alpha$$'; 
           
@@ -403,56 +417,65 @@ fprintf(fidout,...
 '%.3g\t%.3g\t%.3g\t%.3g\t%.3g\t%.3g\t%.3g\t%5.3g\t%5.3g\t\n',...
     thickness(i),Heff,Heff_err, g,g_err, dH0,...
     dH0_err, alpha, alpha_err);
-% ***************************************************
-legendThickness = sprintf('%3.2f',thickness(i)); 
+
+legendThickness = sprintf('%1.2f',thickness(i)); 
 legendSpacer = '\hspace{8 mm}';
-legendGfactor = sprintf('%1.2f',gMat(i));
+legendGfactor = sprintf('%1.2f',g);
 legendHeff = sprintf('%1.2f',Heff);
 
 
 legendLine  = [legendLine; legendThickness ...
     legendSpacer legendGfactor legendSpacer legendHeff];
-% ***************************************************
+
 alpha_disp = alpha*10^3;
 
-legendThickness_Gilbert = sprintf('%3.2f',thickness(i)); 
+legendThickness_Gilbert = sprintf('%5.2f',thickness(i)); 
 legendSpacer_Gilbert = '\hspace{8 mm}';
-
-% if alpha_disp < 1
-    legendAlpha_Gilbert = 'NA';
-% else
-% legendAlpha_Gilbert = sprintf('%5.1f',alpha_disp);
-% end
-
+legendAlpha_Gilbert = sprintf('%5.1f',alpha_disp);
 legenddH0_Gilbert = sprintf('%5.1f',dH0);
 
 
 legendLine_Gilbert  = [legendLine_Gilbert; ...
     legendThickness_Gilbert legendSpacer_Gilbert legendAlpha_Gilbert legendSpacer_Gilbert legenddH0_Gilbert];
-
-% ***************************************************
-
-
-
 end
 
 % 
 % % **************************************************
-legendHeader ='$t(nm)\hspace{6mm} g \hspace{6mm}   H_{eff}(T)$';
+legendHeader ='$t(nm)\hspace{6mm} g \hspace{10mm}   H_{eff}(T)$';
 KittelEquation = ...
-    '$$(\frac {\omega}{\gamma_e})_\perp =H_{res}+H_{eff}$$'; 
+    '$$(\frac {\omega}{\gamma_e})^2_{\parallel} = H_{res}(H_{res}+H_{eff})$$'; 
+
+% thickness = [1.85, 2.3, 4.0, 5.3 ];
 
 
 figure(fig1);
-legend(plot1, '1.85 nm', '2.3 nm','4.0 nm','5.3 nm', ...
-     'location', 'northwest');
+% legend(plot1, '1.69 nm', '2.06 nm','2.67 nm', ...
+%     'location', 'northwest');
+% legend(plot1, '2.67 nm - B05', '2.06 nm - B05','1.69 nm - B05','2.67 nm - B03', '2.06 nm - B03','1.69 nm - B03', ...
+%      'location', 'northwest');
+%  
 
-annotation(fig1,'textbox',...
-[0.15 0.35 0.5 0.3],...
-'string',{KittelEquation, '\newline', legendHeader, legendLine}...
-,'FitBoxToText','on',...
-'LineStyle','none','FontSize',24,  'interpreter','latex',...
-'fontsize',24,'FontWeight','bold');
+if strcmp(sampleName, 'STT54')
+
+LGD1 = legend(plot1, '1.85 nm - old', '2.3 nm - old',  '4.0 nm - old','5.3 nm - old', ...
+   '1.85 nm - new','2.3 nm - new',  '4.0 nm - new', '5.3 nm - new','location', 'northwest');
+else 
+LGD1 = legend(plot1, '2.67 nm - old', '2.06 nm - old','1.69 nm - old','2.67 nm - new', '2.06 nm - new','1.69 nm - new', ...
+     'location', 'northwest');
+end
+% LGD1 = legend(plot1, '1.85 nm - old', '2.3 nm - old',  '4.0 nm - old','5.3 nm - old', ...
+%    '1.85 nm - new','2.3 nm - new',  '4.0 nm - new', '5.3 nm - new','location', 'southeast');
+set(LGD1, 'fontsize', 24);
+
+% annotation(fig1,'textbox',...
+% [0.55 0.2 0.5 0.3],...
+% 'string',{KittelEquation, '\newline', legendHeader, legendLine}...
+% ,'FitBoxToText','on',...
+% 'LineStyle','none','FontSize',24,  'interpreter','latex',...
+% 'fontsize',24,'FontWeight','bold');
+
+
+
 % % **************************************************
 % % 1.85, 2.3, 4.0, 5.3
 % % **************************************************
@@ -462,20 +485,36 @@ GilbertEquation = ...
 legendHeader_Gilbert ='$t(nm)\hspace{2mm} \alpha \times 10^{-3} \hspace{2mm}   \Delta H_{0}(Oe)$';
 
 figure(fig2);
+% 
+% annotation(fig2,'textbox',...
+% [0.625 0.675 0.5 0.3],...
+% 'string',{GilbertEquation,'\newline', legendHeader_Gilbert,...
+% legendLine_Gilbert}...
+% ,'FitBoxToText','on',...
+% 'LineStyle','none','FontSize',24,  'interpreter','latex',...
+% 'fontsize',24,'FontWeight','bold');
 
-annotation(fig2,'textbox',...
-[0.55 0.55 0.5 0.3],...
-'string',{GilbertEquation,'\newline', legendHeader_Gilbert,...
-legendLine_Gilbert}...
-,'FitBoxToText','on',...
-'LineStyle','none','FontSize',24,  'interpreter','latex',...
-'fontsize',24,'FontWeight','bold');
+% 
+% 
+% annotation(fig2,'textbox',...
+% [0.45 0.55 0.5 0.3],...
+% 'string',{GilbertEquation}, 'FitBoxToText','on',...
+% 'LineStyle','none','FontSize',24, 'interpreter','latex',...
+% 'fontsize',24,'FontWeight','bold');
 % **************************************************
 
 
 figure(fig2);
-legend(plot2, '1.85 nm', '2.3 nm','4.0 nm','5.3 nm', ...
+%  
+if strcmp(sampleName, 'STT54')
+
+LGD2 = legend(plot2, '1.85 nm - old', '2.3 nm - old',  '4.0 nm - old','5.3 nm - old', ...
+   '1.85 nm - new','2.3 nm - new',  '4.0 nm - new', '5.3 nm - new','location', 'northwest');
+else 
+LGD2 = legend(plot2, '2.67 nm - old', '2.06 nm - old','1.69 nm - old','2.67 nm - new', '2.06 nm - new','1.69 nm - new', ...
      'location', 'northwest');
+end
+set(LGD2, 'fontsize', 24);
 
 fignameKittel = [sampleName '_Kittel.png'];
 fig1.PaperPositionMode = 'auto';% set image size as auto
@@ -487,7 +526,3 @@ fig2.PaperPositionMode = 'auto';% set image size as auto
 saveas(fig2,  fignameGilbert);
 
 % close all;
-
-
-% **************************************************
-% *************************************************

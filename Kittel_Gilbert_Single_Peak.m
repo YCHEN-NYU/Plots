@@ -13,7 +13,7 @@ mu_B = 927.400*10^(-26); % J/T
 h = 6.62607*10^(-34); % J*s
 % ******************************
 % ******************************
-samplename = 'W6PN21_P2N1';
+samplename = 'STT.txt';
 % ******************************
 % ******************************
 
@@ -373,27 +373,27 @@ fprintf(fidout,'%.3g\t%.3g\t%.3g\t%.3g\t%.3g\t%.3g\t%.3g\t%5.3g\t%5.3g\t\n',thic
 
 end
 
-
-annotation(fig1,'textbox',...
-[0.15 0.55 0.5 0.3],...
-'string',{'CoFeB (1.85 nm)',text_Heff,text_g},'FitBoxToText','on',...
-'LineStyle','none','FontSize',32,  'interpreter','latex',...
-'fontsize',32,'FontWeight','bold');
-
-annotation(fig2,'textbox',...
-[0.3 0.55 0.5 0.3],...
-'string',{text_dH0,text_alpha},'FitBoxToText','on',...
-'LineStyle','none','FontSize',32,  'interpreter','latex',...
-'fontsize',32,'FontWeight','bold');
-
-fig1.PaperPositionMode = 'auto';% set image size as auto
-saveas(fig1,  fignameKittel);
-
-fig2.PaperPositionMode = 'auto';% set image size as auto
-saveas(fig2,  fignameGilbert);
-
-% clear all;
-close all;
+% 
+% annotation(fig1,'textbox',...
+% [0.15 0.55 0.5 0.3],...
+% 'string',{'CoFeB (1.85 nm)',text_Heff,text_g},'FitBoxToText','on',...
+% 'LineStyle','none','FontSize',32,  'interpreter','latex',...
+% 'fontsize',32,'FontWeight','bold');
+% 
+% annotation(fig2,'textbox',...
+% [0.3 0.55 0.5 0.3],...
+% 'string',{text_dH0,text_alpha},'FitBoxToText','on',...
+% 'LineStyle','none','FontSize',32,  'interpreter','latex',...
+% 'fontsize',32,'FontWeight','bold');
+% 
+% fig1.PaperPositionMode = 'auto';% set image size as auto
+% saveas(fig1,  fignameKittel);
+% 
+% fig2.PaperPositionMode = 'auto';% set image size as auto
+% saveas(fig2,  fignameGilbert);
+% 
+% % clear all;
+% close all;
 
 
 
